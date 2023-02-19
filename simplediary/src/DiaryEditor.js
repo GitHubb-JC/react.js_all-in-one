@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-const DiaryEditor = () => {
+const DiaryEditor = ({ onCreate }) => {
   //useRef함수를 이용해 authorInput을 만들어줘
   const authorInput = useRef();
   const contentInput = useRef();
@@ -30,7 +30,15 @@ const DiaryEditor = () => {
       return;
     }
 
+    // 프롭스로 전달 받은 함수를 사용하여 일기 생성
+    onCreate(state.author, state.content, state.emotion);
     alert("저장 성공!");
+    // 일기를 만들면 생성창은 다시 빈칸으로 바꿔줘야지
+    setState({
+      author: "",
+      content: "",
+      emotion: 1,
+    });
   };
 
   return (
