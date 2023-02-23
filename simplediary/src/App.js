@@ -2,7 +2,6 @@ import { useRef, useState, useEffect } from "react";
 import "./App.css";
 import DiaryEditor from "./DiaryEditor";
 import DiaryList from "./DiaryList";
-import Lifecycle from "./Lifecycle";
 
 // https://jsonplaceholder.typicode.com/comments
 
@@ -17,10 +16,28 @@ function App() {
       "https://jsonplaceholder.typicode.com/comments"
     ).then((res) => res.json());
     console.log(res);
+
+    const initData = res.slice(0, 20).map((it) => {
+      return {
+        author: it.email,
+        content: it.body,
+        // js 에서 수학 연산을 담당하는 내장 객체 Math 이용
+        // Math.random() * 5 >> 0 ~ 4.xx 까지 랜덤 난수 생성
+        // Math.floor() >> random이 정수가 아닌 소수점 숫자들을 가져
+        // 소수점 아래를 떨구기 위해 사용
+        // 결과적으로 아래 줄은 1 ~ 5 까지 숫자가 나온다
+        emotion: Math.floor(Math.random() * 5) + 1,
+        created_date: new Date().getTime(),
+        id: dataId.current++,
+      };
+    });
+
+    setData(initData);
   };
 
   useEffect(() => {
     getData();
+    // 빈 배열을 넣으면 마운트 시에 바로 콜백함수를 실행 한다.
   }, []);
 
   // 새로운 일기를 만들 함수
