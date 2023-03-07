@@ -49,7 +49,10 @@ function App() {
 
     dataId.current += 1; // id 값을 하나 올려주고
 
-    setData([newItem, ...data]); // 일기장 data 에 새로운 일기 newItem을 가장 위(앞)에 추가해준다.
+    // 함수형 업데이트 활용
+    // 함수를 실행하면 data를 받아와서
+    // data 에 새로운 일기 newItem을 가장 위(앞)에 추가해준다.
+    setData((data) => [newItem, ...data]);
   }, []);
 
   // targetId를 전달 받아 onDelete실행
