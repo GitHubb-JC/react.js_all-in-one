@@ -1,12 +1,35 @@
-import { useRef, useState, useEffect, useMemo, useCallback } from "react";
+import { useRef, useEffect, useMemo, useCallback, useReducer } from "react";
 import "./App.css";
 import DiaryEditor from "./DiaryEditor";
 import DiaryList from "./DiaryList";
 
-// https://jsonplaceholder.typicode.com/comments
+// reducer = (상태변화 전 state, 어떤 상태 변화를 일으킬지)
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "INIT": {
+      return action.data;
+    }
+    case "CREATE": {
+      const created_date = new Date().getTime(); // 생성시간은 여기서 만들어
+      // newItem 객체 생성
+      const newItem = {
+        ...action.data,
+        created_date,
+      };
+      // [기존의 state에 newItem을 추가해서 return]
+      return [newItem, ...state];
+    }
+    case "REMOVE":
+    case "EDIT":
+    default:
+      return state;
+  }
+};
 
 function App() {
-  const [data, setData] = useState([]); //일기 데이터들은 빈 상태로 시작한다.
+  // [dispatch가 리턴하는 값이 새로운 state(=data), << dispatch를 호출하면]
+  const [data, dispatch] = useReducer(reducer, []); // useReducer(상태 변화를 처리할 reducer함수, data의 초기값)
+
   const dataId = useRef(0);
 
   const getData = async () => {
@@ -29,7 +52,7 @@ function App() {
       };
     });
 
-    setData(initData);
+    dispatch({ type: "INIT", data: initData }); //
   };
 
   useEffect(() => {
@@ -37,35 +60,22 @@ function App() {
   }, []); // 빈 배열을 넣으면 마운트 시에 바로 콜백함수를 실행 한다.
 
   const onCreate = useCallback((author, content, emotion) => {
-    // 새로운 일기를 만들 함수
-    const created_date = new Date().getTime(); // 생성할 정보들을 받아 새로운 일기 생성
-    const newItem = {
-      author,
-      content,
-      emotion,
-      created_date,
-      id: dataId.current,
-    };
-
+    dispatch({
+      type: "CREATE",
+      data: { author, content, emotion, id: dataId.current },
+    });
     dataId.current += 1; // id 값을 하나 올려주고
-
-    // 함수형 업데이트 활용
-    // 함수를 실행하면 data를 받아와서
-    // data 에 새로운 일기 newItem을 가장 위(앞)에 추가해준다.
-    setData((data) => [newItem, ...data]);
   }, []);
 
   // targetId를 전달 받아 onDelete실행
-  const onRemove = (targetId) => {
-    // targetId를 가진 일기를 제외하고 newDiaryList에 filter로 담아
-    const newDiaryList = data.filter((it) => it.id !== targetId);
-    // 그렇게 새로운 List 를 setData 이용하여 일기장 List에 담아
-    setData(newDiaryList);
-  };
+  const onRemove = useCallback((targetId) => {
+    // targetId를 가진 일기를 제외하고 newDiaryList에 filter로 담아 새로운 List 를 setData 이용하여 일기장 List에 담아
+    setData((data) => data.filter((it) => it.id !== targetId));
+  }, []);
 
   // 수정할 글의 targetId 값과 새로운 내용의 newContent를 받아와
-  const onEdit = (targetId, newContent) => {
-    setData(
+  const onEdit = useCallback((targetId, newContent) => {
+    setData((data) =>
       data.map(
         (
           it // map함수로 data에 있는 값을 다 돌려봐줘
@@ -76,7 +86,7 @@ function App() {
           it.id === targetId ? { ...it, content: newContent } : it
       )
     );
-  };
+  }, []);
 
   // useMemo를 사용하면 getDiaryAnalysis 이 변수는 더 이상 함수가 아니라 "값" 으로 취급해
   const getDiaryAnalysis = useMemo(() => {
